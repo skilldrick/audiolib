@@ -1,3 +1,5 @@
+import {ctx} from './audio';
+
 const getData = (filename, cb) => {
   const request = new XMLHttpRequest();
   request.open('GET', filename, true);
@@ -8,7 +10,7 @@ const getData = (filename, cb) => {
   request.send();
 }
 
-const getAudioBuffer = (ctx, filename) => {
+const getAudioBuffer = (filename) => {
   return new Promise(resolve => {
     getData(filename, (audioData) => {
       ctx.decodeAudioData(audioData, resolve);

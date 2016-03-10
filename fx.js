@@ -1,8 +1,6 @@
 import {ctx} from './audio';
 import {getAudioBuffer} from './ajax';
 import {connect, node} from './util';
-import {collectPromise} from './promise_collector';
-import impulseResponse from './assets/Conic Long Echo Hall.wav';
 
 const createFilterNode = (freq) =>{
   const filter = ctx.createBiquadFilter();
@@ -10,12 +8,9 @@ const createFilterNode = (freq) =>{
   return filter;
 };
 
-const createReverbNode = (mix) => {
+const createReverbNode = (mix, convolverBuffer) => {
   const convolver = ctx.createConvolver();
-
-  collectPromise(getAudioBuffer(ctx, impulseResponse)).then(buffer => {
-    convolver.buffer = buffer;
-  });
+  convolver.buffer = convolverBuffer;
 
   const input = ctx.createGain();
   const dryMix = ctx.createGain();

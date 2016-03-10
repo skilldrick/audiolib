@@ -1,37 +1,42 @@
 import {ctx} from './audio';
 import fx from './fx';
-import {getAudioBuffer} from './ajax';
 import {connect, noteToFreq} from './util';
 
-
+let initialized = false;
 const oscOut = ctx.createGain();
 
-const filter = fx.createFilterNode(3000);
-const distortion = fx.createDistortionNode(1.2);
-const reverb = fx.createReverbNode(0.5);
+const initSynth = (convolverBuffer) => {
+  const filter = fx.createFilterNode(3000);
+  const distortion = fx.createDistortionNode(1.2);
+  const reverb = fx.createReverbNode(0.5, convolverBuffer);
 
-const delay = fx.createDelayNode({
-  delayTime: 1.333,
-  feedback: 0.4,
-  dryMix: 1,
-  wetMix: 0.7,
-  cutoff: 1000
-});
+  const delay = fx.createDelayNode({
+    delayTime: 1.333,
+    feedback: 0.4,
+    dryMix: 1,
+    wetMix: 0.7,
+    cutoff: 1000
+  });
 
-connect(
-  oscOut,
-  delay,
-  distortion,
-  reverb,
-  filter,
-  ctx.destination
-);
+  connect(
+    oscOut,
+    delay,
+    distortion,
+    reverb,
+    filter,
+    ctx.destination
+  );
+
+  initialized = true;
+};
 
 const playNote = (note, when, length) => {
   playFreq(noteToFreq(note), when, length);
 };
 
 const playFreq = (freq, when, length) => {
+  if (!initialized) throw new Error("Need to call initSynth");
+
   const gain = ctx.createGain();
   gain.gain.value = 0;
 
@@ -79,4 +84,4 @@ const createOsc = (frequency) => {
   return osc;
 };
 
-module.exports = {playNote, playFreq};
+module.exports = {playNote, playFreq, initSynth};
