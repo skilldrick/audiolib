@@ -1,0 +1,11 @@
+{
+  "name": "audiolib",
+  "version": "0.1.0",
+  "description": "?",
+  "author": "Nick Morgan (@skilldrick)",
+  "license": "ISC",
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
