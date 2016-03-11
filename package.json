@@ -1,11 +1,7 @@
 {
   "name": "audiolib",
   "version": "0.1.0",
-  "description": "?",
+  "description": "A library for the Web Audio API",
   "author": "Nick Morgan (@skilldrick)",
-  "license": "ISC",
-  "dependencies": {
-  },
-  "devDependencies": {
-  }
+  "license": "ISC"
 }
