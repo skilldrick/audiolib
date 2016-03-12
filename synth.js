@@ -34,51 +34,84 @@ const playNote = (note, when, length) => {
   playFreq(noteToFreq(note), when, length);
 };
 
-const playFreq = (freq, when, length) => {
-  if (!initialized) throw new Error("Need to call initSynth");
+/*
+Create Attack-Decay-Sustain-Release envelope
+
+Attack is the time from note start to max gain.
+Decay is the time from after attack to sustain gain
+End is the "length" of the note
+Release is the time from end to 0 gain
+
+  1|     /\
+   |    /  \
+  s|   /    \________
+   |  /              \
+   | /                \
+   |/                  \
+   +----------------------
+   |     |   |       |  |
+ start   a   d      end r
+*/
+const createAdsrEnvelope = (adsr, when, length) => {
+  const releaseStart = when + length;
+  const attackEnd = Math.min(when + adsr.attack, releaseStart);
+  const decayEnd = Math.min(attackEnd + adsr.decay, releaseStart);
+  const releaseEnd = releaseStart + adsr.release;
 
   const gain = ctx.createGain();
   gain.gain.value = 0;
+  gain.gain.setValueAtTime(0, when);
+
+  // Attack
+  gain.gain.linearRampToValueAtTime(1, attackEnd);
+
+  // Decay
+  gain.gain.linearRampToValueAtTime(adsr.sustain, decayEnd);
+
+  // Sustain
+  gain.gain.setValueAtTime(adsr.sustain, releaseStart);
+
+  // Release
+  gain.gain.linearRampToValueAtTime(0, releaseEnd);
+
+  return gain;
+}
+
+const playFreq = (freq, when, length) => {
+  if (!initialized) throw new Error("Need to call initSynth");
+const gain = ctx.createGain();
+  gain.gain.value = 0.2;
+
+  const adsrEnv = createAdsrEnvelope({
+    attack: 0.05,
+    decay: 0.3,
+    sustain: 0.8,
+    release: 0.3
+  }, when, length);
 
   const osc = createOsc(freq);
-  connect(osc, gain, oscOut);
 
-  const targetGain = 0.2;
-  const fadeTime = 0.03;
-
-  gain.gain.setValueAtTime(0, when);
-  gain.gain.linearRampToValueAtTime(targetGain, when + fadeTime);
-  gain.gain.setValueAtTime(targetGain, when + length);
-  gain.gain.linearRampToValueAtTime(0, when + length + fadeTime);
+  connect(osc, adsrEnv, gain, oscOut);
 
   osc.start(when);
-  osc.stop(when + length + fadeTime);
+  osc.stop(when + length + 0.3); // Shouldn't duplicate release value
+};
+
+// Create a periodic wave using an array of harmonic coefficients.
+// DC offset is always set to 0.
+// Imag values always set to 0 (they don't affect the tone, only the wave shape)
+const createPeriodicWave = (reals) => {
+  return ctx.createPeriodicWave(
+    new Float32Array([0, ...reals]),
+    new Float32Array(reals.length + 1)
+  );
 };
 
 const createOsc = (frequency) => {
-
   const osc = ctx.createOscillator();
   osc.frequency.value = frequency;
 
-  const real = new Float32Array(6);
-  const imag = new Float32Array(6);
-
-  real[0] = 0;
-  imag[0] = 0;
-  real[1] = 0.6;
-  imag[1] = 0;
-  real[2] = 0.5;
-  imag[2] = 0;
-  real[3] = 0.5;
-  imag[3] = 0;
-  real[4] = 0.2;
-  imag[4] = 0;
-  real[5] = 0.2;
-  imag[5] = 0;
-  real[6] = 0.1;
-  imag[6] = 0;
-
-  const wave = ctx.createPeriodicWave(real, imag);
+  const wave = createPeriodicWave([0.6, 0.5, 0.1, 0.3, 0.1, 0.3]);
   osc.setPeriodicWave(wave);
 
   return osc;
