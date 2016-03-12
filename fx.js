@@ -2,23 +2,34 @@ import {ctx} from './audio';
 import {getAudioBuffer} from './ajax';
 import {connect, node} from './util';
 
-const createFilterNode = (freq) =>{
+const createFilterNode = (freq) => {
   const filter = ctx.createBiquadFilter();
   filter.frequency.value = freq;
   return filter;
+};
+
+const createDelayNode = (maxDelayTime, delayTime) => {
+  const delay = ctx.createDelay(maxDelayTime);
+  delay.delayTime.value = delayTime;
+  return delay;
+};
+
+const createGainNode = (gain) => {
+  const gainNode = ctx.createGain();
+  if (gain !== undefined) {
+    gainNode.gain.value = gain;
+  }
+  return gainNode;
 };
 
 const createReverbNode = (mix, convolverBuffer) => {
   const convolver = ctx.createConvolver();
   convolver.buffer = convolverBuffer;
 
-  const input = ctx.createGain();
-  const dryMix = ctx.createGain();
-  const wetMix = ctx.createGain();
-  const output = ctx.createGain();
-
-  dryMix.gain.value = 1 - mix;
-  wetMix.gain.value = mix;
+  const input = createGainNode();
+  const dryMix = createGainNode(1 - mix);
+  const wetMix = createGainNode(mix);
+  const output = createGainNode();
 
   connect(input, dryMix, output);
   connect(input, convolver, wetMix, output);
@@ -26,7 +37,7 @@ const createReverbNode = (mix, convolverBuffer) => {
   return node(input, output);
 };
 
-const createDelayNode = (options) => {
+const createDelayFeedbackNode = (options) => {
   // Set up options
   const dryMix = options.dryMix || 1;
   const wetMix = options.wetMix || 0.5;
@@ -35,19 +46,13 @@ const createDelayNode = (options) => {
   const cutoff = options.cutoff || 5000;
 
   // Create nodes
-  const input = ctx.createGain();
-  const output = ctx.createGain();
-  const delay = ctx.createDelay(3);
-  const feedbackGain = ctx.createGain();
-  const dryMixNode = ctx.createGain();
-  const wetMixNode = ctx.createGain();
+  const input = createGainNode();
+  const output = createGainNode();
+  const delay = createDelayNode(3, delayTime);
+  const feedbackGain = createGainNode(feedback);
+  const dryMixNode = createGainNode(dryMix);
+  const wetMixNode = createGainNode(wetMix);
   const filter = createFilterNode(cutoff);
-
-  // Configure nodes
-  delay.delayTime.value = delayTime;
-  feedbackGain.gain.value = feedback;
-  dryMixNode.gain.value = dryMix;
-  wetMixNode.gain.value = wetMix;
 
   // Node graph:
   // input -> dryMixNode ------------------------------------+-> output
@@ -164,4 +169,10 @@ const makeDistortionCurve = (func) => {
   return new Float32Array(curve);
 };
 
-module.exports = {createFilterNode, createReverbNode, createDelayNode, createDistortionNode};
+module.exports = {
+  createGainNode,
+  createFilterNode,
+  createReverbNode,
+  createDelayFeedbackNode,
+  createDistortionNode
+};

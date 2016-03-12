@@ -4,7 +4,7 @@ class Clock {
   constructor() {
     this.beatLength = null;
     this.backgroundTimeoutTime = 1000;
-    this.foregroundTimeoutTime = 50;
+    this.foregroundTimeoutTime = 100;
     this.timeoutTime = this.foregroundTimeoutTime;
     this.callbacks = new Set();
     this.playing = false;
