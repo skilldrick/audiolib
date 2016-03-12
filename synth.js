@@ -2,35 +2,6 @@ import {ctx} from './audio';
 import fx from './fx';
 import {connect, noteToFreq} from './util';
 
-let initialized = false;
-
-const createSynth = (adsr, coefficients) => {
-  const output = fx.createGainNode();
-
-  const playNote = (note, when, length) => {
-    playFreq(noteToFreq(note), when, length);
-  };
-
-  const playFreq = (freq, when, length) => {
-    if (!initialized) throw new Error("Need to call initSynth");
-
-    const gain = fx.createGainNode(0.2);
-    const adsrEnv = createAdsrEnvelope(adsr, when, length);
-    const osc = createOsc(freq, coefficients);
-
-    connect(osc, adsrEnv, gain, output);
-
-    osc.start(when);
-    osc.stop(when + length + adsr.release);
-  };
-
-  return {
-    playFreq,
-    playNote,
-    connect: output.connect.bind(output)
-  };
-};
-
 /*
 Create Attack-Decay-Sustain-Release envelope
 
@@ -91,40 +62,29 @@ const createOsc = (frequency, coefficients) => {
   return osc;
 };
 
-const synth = createSynth({
-  attack: 0.1,
-  decay: 0.3,
-  sustain: 0.9,
-  release: 0.3
-}, [0.6, 0.5, 0.1, 0.3, 0.1, 0.3]);
+const createSynth = (gain, adsr, coefficients) => {
+  const output = fx.createGainNode();
+  const gainNode = fx.createGainNode(gain);
 
-const initSynth = (convolverBuffer) => {
-  const filter = fx.createFilterNode(3000);
-  const distortion = fx.createDistortionNode(1.2);
-  const reverb = fx.createReverbNode(0.5, convolverBuffer);
+  const playNote = (note, when, length) => {
+    playFreq(noteToFreq(note), when, length);
+  };
 
-  const delay = fx.createDelayFeedbackNode({
-    delayTime: 1.333,
-    feedback: 0.4,
-    dryMix: 1,
-    wetMix: 0.7,
-    cutoff: 1000
-  });
+  const playFreq = (freq, when, length) => {
+    const osc = createOsc(freq, coefficients);
+    const adsrEnv = createAdsrEnvelope(adsr, when, length);
 
-  connect(
-    synth,
-    delay,
-    distortion,
-    reverb,
-    filter,
-    ctx.destination
-  );
+    connect(osc, adsrEnv, gainNode, output);
 
-  initialized = true;
+    osc.start(when);
+    osc.stop(when + length + adsr.release);
+  };
+
+  return {
+    playFreq,
+    playNote,
+    connect: output.connect.bind(output)
+  };
 };
 
-module.exports = {
-  playNote: synth.playNote,
-  playFreq: synth.playFreq,
-  initSynth
-};
+module.exports = {createSynth};
