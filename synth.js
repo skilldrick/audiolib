@@ -21,7 +21,7 @@ const createSynth = (adsr, coefficients) => {
     connect(osc, adsrEnv, gain, output);
 
     osc.start(when);
-    osc.stop(when + length + 0.3); // Shouldn't duplicate release value
+    osc.stop(when + length + adsr.release);
   };
 
   return {
@@ -92,9 +92,9 @@ const createOsc = (frequency, coefficients) => {
 };
 
 const synth = createSynth({
-  attack: 0.05,
+  attack: 0.1,
   decay: 0.3,
-  sustain: 0.8,
+  sustain: 0.9,
   release: 0.3
 }, [0.6, 0.5, 0.1, 0.3, 0.1, 0.3]);
 
