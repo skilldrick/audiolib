@@ -3,8 +3,9 @@ import {getCurrentTime} from './audio';
 class Clock {
   constructor() {
     this.beatLength = null;
-    this.intervalTime = 100;
+    this.timeoutTime = 50;
     this.callbacks = new Set();
+    this.playing = false;
   }
 
   addCallback(cb) {
@@ -20,30 +21,34 @@ class Clock {
   }
 
   start() {
-    this.stop();
+    if (this.playing) return;
+    this.playing = true;
 
     let previousTime = getCurrentTime();
     this.timeInBeats = 0; // Fractional beat count
     this.beat = 0;        // Integer beat count
 
     // Keeps timeInBeats up-to-date
-    const intervalFunc = () => {
+    const timeoutFunc = () => {
       const now = getCurrentTime();
       const diff = now - previousTime;
       const diffInBeats = diff / this.beatLength;
       previousTime = now;
       this.timeInBeats += diffInBeats; // Update timeInBeats based on diff
       this.tick(now, this.timeInBeats);
+
+      if (this.playing) {
+        setTimeout(timeoutFunc, this.timeoutTime);
+      }
     };
 
-    intervalFunc(); // run intervalFunc immediately once before setInterval
-    this.interval = setInterval(intervalFunc, this.intervalTime);
+    timeoutFunc();
   }
 
 
   tick(now, timeInBeats) {
     const thisBeat = this.beat;
-    const nextBeat = Math.ceil(timeInBeats) + 2; // Look ahead by 2 beats
+    const nextBeat = Math.ceil(timeInBeats) + 1; // Look ahead by 1 beat
 
     // call callbacks for all beats between thisBeat and nextBeat
     for (let i = thisBeat; i < nextBeat; i++) {
@@ -62,7 +67,7 @@ class Clock {
 
     for (let cb of this.callbacks) {
       /*
-      * callbacks are cllaed for every beat
+      * callbacks are called for every beat
       * beat: the next beat to enqueue
       * now: current time
       * timeUntilBeat: time delta between now and when beat is due
@@ -73,7 +78,7 @@ class Clock {
   }
 
   stop() {
-    clearInterval(this.interval);
+    this.playing = false;
   }
 
 };
