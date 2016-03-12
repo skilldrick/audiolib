@@ -4,8 +4,10 @@ const node = (input, output) => ({
   connect: (node) => output.connect(node)
 });
 
-const connectNodes = (node1, node2) =>
+const connectNodes = (node1, node2) => {
   node1.connect(node2 instanceof AudioNode ? node2 : node2.input);
+  return node2;
+};
 
 // Connect `nodes` together in a chain. Can be AudioNode or AudioNode-like
 const connect = (...nodes) => nodes.reduce(connectNodes);
