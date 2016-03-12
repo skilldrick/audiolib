@@ -37,10 +37,11 @@ const playNote = (note, when, length) => {
 /*
 Create Attack-Decay-Sustain-Release envelope
 
-Attack is the time from note start to max gain.
-Decay is the time from after attack to sustain gain
-End is the "length" of the note
-Release is the time from end to 0 gain
+Attack is the time from note start to 1 gain.
+Decay is the time from max gain to sustain gain.
+Sustain is the gain decay goes to.
+End is the length of the note.
+Release is the time from end to 0 gain.
 
   1|     /\
    |    /  \
@@ -49,8 +50,8 @@ Release is the time from end to 0 gain
    | /                \
    |/                  \
    +----------------------
-   |     |   |       |  |
- start   a   d      end r
+   |  a  | d |       | r|
+ start              end
 */
 const createAdsrEnvelope = (adsr, when, length) => {
   const releaseStart = when + length;
