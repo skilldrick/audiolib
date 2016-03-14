@@ -1,5 +1,3 @@
-import {getAudioBuffer} from './ajax';
-
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 
 const createSource = (buffer) => {

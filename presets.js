@@ -34,4 +34,12 @@ const fxPreset1 = (convolverBuffer) => {
   return node(delay, filter);
 };
 
-module.exports = {synth1, fxPreset1};
+const synth2 = createSynth(0.3, {
+  attack: 0.1,
+  decay: 0.3,
+  sustain: 0.9,
+  release: 0.1
+}, [0.6, 0.5, 0.1, 0.3, 0.1, 0.1]);
+
+
+module.exports = {synth1, synth2, fxPreset1};
