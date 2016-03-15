@@ -1,8 +1,8 @@
 import {connect, node} from './util';
-import {createSynth} from './synth';
+import {Synth} from './synth';
 import fx from './fx';
 
-const synth1 = createSynth(0.3, {
+const synth1 = new Synth(0.3, {
   attack: 0.1,
   decay: 0.3,
   sustain: 0.9,
@@ -34,7 +34,7 @@ const fxPreset1 = (convolverBuffer) => {
   return node(delay, filter);
 };
 
-const synth2 = createSynth(0.3, {
+const synth2 = new Synth(0.3, {
   attack: 0.1,
   decay: 0.3,
   sustain: 0.9,

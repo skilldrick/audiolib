@@ -62,29 +62,31 @@ const createOsc = (frequency, coefficients) => {
   return osc;
 };
 
-const createSynth = (gain, adsr, coefficients) => {
-  const output = fx.createGainNode();
-  const gainNode = fx.createGainNode(gain);
+class Synth {
+  constructor(gain, adsr, coefficients) {
+    this.output = fx.createGainNode();
+    this.gainNode = fx.createGainNode(gain);
+    this.adsr = adsr;
+    this.coefficients = coefficients;
+  }
 
-  const playNote = (note, when, length) => {
+  playNote = (note, when, length) => {
     playFreq(noteToFreq(note), when, length);
-  };
+  }
 
-  const playFreq = (freq, when, length) => {
-    const osc = createOsc(freq, coefficients);
-    const adsrEnv = createAdsrEnvelope(adsr, when, length);
+  playFreq = (freq, when, length) => {
+    const osc = createOsc(freq, this.coefficients);
+    const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
 
-    connect(osc, adsrEnv, gainNode, output);
+    connect(osc, adsrEnv, this.gainNode, this.output);
 
     osc.start(when);
-    osc.stop(when + length + adsr.release);
-  };
+    osc.stop(when + length + this.adsr.release);
+  }
 
-  return {
-    playFreq,
-    playNote,
-    connect: output.connect.bind(output)
-  };
+  connect = (other) => {
+    this.output.connect(other);
+  }
 };
 
-module.exports = {createSynth};
+module.exports = {Synth};
