@@ -81,18 +81,18 @@ class HarmonicSynth extends Synth {
 class FmSynth extends Synth {
   constructor() {
     super();
-    this.multiplier = 8;
-    this.fmGain = 1000;
+    this.color = 8;
+    this.intensity = 1000;
   }
 
   playFreq(freq, when, length) {
     const osc = nodes.createOscillator(freq, 'square');
-    const mod = nodes.createOscillator(freq * this.multiplier);
+    const mod = nodes.createOscillator(freq * this.color);
 
     const adsrEnv1 = createAdsrEnvelope(this.adsr, when, length);
     const adsrEnv2 = createAdsrEnvelope(this.adsr, when, length);
 
-    const g = nodes.createGain(this.fmGain);
+    const g = nodes.createGain(this.intensity);
 
     connect(osc, adsrEnv1, this.output);
     connect(mod, g, adsrEnv2, osc.frequency);

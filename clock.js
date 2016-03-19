@@ -26,8 +26,8 @@ class Clock {
     if (this.playing) return;
     this.playing = true;
 
-    this.timeInBeats = 0; // Fractional beat count
-    this.beat = 0;        // Integer beat count
+    this.timeInBeats = this.timeInBeats || 0; // Fractional beat count
+    this.beat = this.beat || 0;        // Integer beat count
 
     // Keeps timeInBeats up-to-date
     const timeoutFunc = (previousTime) => {
@@ -38,16 +38,23 @@ class Clock {
       this.timeInBeats += diffInBeats; // Update timeInBeats based on diff
       this.tick(now, this.timeInBeats);
 
-      if (this.playing) {
-        setTimeout(timeoutFunc.bind(null, now), this.timeoutTime);
-      }
+      this.timeout = setTimeout(timeoutFunc.bind(null, now), this.timeoutTime);
     };
 
     timeoutFunc(getCurrentTime());
   }
 
-  stop() {
+  pause() {
     this.playing = false;
+    clearTimeout(this.timeout);
+  }
+
+  stop() {
+    this.pause();
+
+    // Reset current time
+    this.timeInBeats = 0;
+    this.beat = 0;
   }
 
   /*
