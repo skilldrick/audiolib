@@ -1,5 +1,6 @@
 import {ctx} from './audio';
 import fx from './fx';
+import nodes from './nodes';
 import {connect, noteToFreq} from './util';
 
 /*
@@ -27,7 +28,7 @@ const createAdsrEnvelope = (adsr, when, length) => {
   const decayEnd = Math.min(attackEnd + adsr.decay, releaseStart);
   const releaseEnd = releaseStart + adsr.release;
 
-  const gain = fx.createGainNode(0);
+  const gain = nodes.createGain(0);
   gain.gain.setValueAtTime(0, when);
 
   // Attack
@@ -45,31 +46,9 @@ const createAdsrEnvelope = (adsr, when, length) => {
   return gain;
 }
 
-const createOsc = (frequency, coefficientsOrType) => {
-  const osc = ctx.createOscillator();
-  osc.frequency.value = frequency;
-
-  if (Array.isArray(coefficientsOrType)) {
-    // Create a periodic wave using an array of harmonic coefficients.
-    // DC offset is always set to 0.
-    // Imag values always set to 0 (they don't affect the tone, only the wave shape)
-    const wave = ctx.createPeriodicWave(
-      new Float32Array([0, ...coefficientsOrType]),
-      new Float32Array(coefficientsOrType.length + 1)
-    );
-
-    osc.setPeriodicWave(wave);
-  } else if (typeof coefficientsOrType == 'string') {
-    // sine, square, sawtooth, triangle
-    osc.type = coefficientsOrType;
-  }
-
-  return osc;
-};
-
 class Synth {
   constructor() {
-    this.output = fx.createGainNode();
+    this.output = nodes.createGain();
   }
 
   playNote = (note, when, length) => {
@@ -89,7 +68,7 @@ class HarmonicSynth extends Synth {
   }
 
   playFreq = (freq, when, length) => {
-    const osc = createOsc(freq, this.coefficientsOrType);
+    const osc = nodes.createOscillator(freq, this.coefficientsOrType);
     const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
 
     connect(osc, adsrEnv, this.output);
@@ -107,13 +86,13 @@ class FmSynth extends Synth {
   }
 
   playFreq(freq, when, length) {
-    const osc = createOsc(freq, 'square');
-    const mod = createOsc(freq * this.multiplier);
+    const osc = nodes.createOscillator(freq, 'square');
+    const mod = nodes.createOscillator(freq * this.multiplier);
 
     const adsrEnv1 = createAdsrEnvelope(this.adsr, when, length);
     const adsrEnv2 = createAdsrEnvelope(this.adsr, when, length);
 
-    const g = fx.createGainNode(this.fmGain);
+    const g = nodes.createGain(this.fmGain);
 
     connect(osc, adsrEnv1, this.output);
     connect(mod, g, adsrEnv2, osc.frequency);
