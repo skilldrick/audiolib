@@ -45,48 +45,84 @@ const createAdsrEnvelope = (adsr, when, length) => {
   return gain;
 }
 
-const createOsc = (frequency, coefficients) => {
+const createOsc = (frequency, coefficientsOrType) => {
   const osc = ctx.createOscillator();
   osc.frequency.value = frequency;
 
-  // Create a periodic wave using an array of harmonic coefficients.
-  // DC offset is always set to 0.
-  // Imag values always set to 0 (they don't affect the tone, only the wave shape)
-  const wave = ctx.createPeriodicWave(
-    new Float32Array([0, ...coefficients]),
-    new Float32Array(coefficients.length + 1)
-  );
+  if (Array.isArray(coefficientsOrType)) {
+    // Create a periodic wave using an array of harmonic coefficients.
+    // DC offset is always set to 0.
+    // Imag values always set to 0 (they don't affect the tone, only the wave shape)
+    const wave = ctx.createPeriodicWave(
+      new Float32Array([0, ...coefficientsOrType]),
+      new Float32Array(coefficientsOrType.length + 1)
+    );
 
-  osc.setPeriodicWave(wave);
+    osc.setPeriodicWave(wave);
+  } else if (typeof coefficientsOrType == 'string') {
+    // sine, square, sawtooth, triangle
+    osc.type = coefficientsOrType;
+  }
 
   return osc;
 };
 
 class Synth {
-  constructor(gain, adsr, coefficients) {
+  constructor() {
     this.output = fx.createGainNode();
-    this.gainNode = fx.createGainNode(gain);
-    this.adsr = adsr;
-    this.coefficients = coefficients;
   }
 
   playNote = (note, when, length) => {
-    playFreq(noteToFreq(note), when, length);
-  }
-
-  playFreq = (freq, when, length) => {
-    const osc = createOsc(freq, this.coefficients);
-    const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
-
-    connect(osc, adsrEnv, this.gainNode, this.output);
-
-    osc.start(when);
-    osc.stop(when + length + this.adsr.release);
+    this.playFreq(noteToFreq(note), when, length);
   }
 
   connect = (other) => {
     this.output.connect(other);
   }
+}
+
+class HarmonicSynth extends Synth {
+  constructor(adsr, coefficientsOrType) {
+    super();
+    this.adsr = adsr;
+    this.coefficientsOrType = coefficientsOrType;
+  }
+
+  playFreq = (freq, when, length) => {
+    const osc = createOsc(freq, this.coefficientsOrType);
+    const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
+
+    connect(osc, adsrEnv, this.output);
+
+    osc.start(when);
+    osc.stop(when + length + this.adsr.release);
+  }
 };
 
-module.exports = {Synth};
+class FmSynth extends Synth {
+  constructor() {
+    super();
+    this.multiplier = 8;
+    this.fmGain = 1000;
+  }
+
+  playFreq(freq, when, length) {
+    const osc = createOsc(freq, 'square');
+    const mod = createOsc(freq * this.multiplier);
+
+    const adsrEnv1 = createAdsrEnvelope(this.adsr, when, length);
+    const adsrEnv2 = createAdsrEnvelope(this.adsr, when, length);
+
+    const g = fx.createGainNode(this.fmGain);
+
+    connect(osc, adsrEnv1, this.output);
+    connect(mod, g, adsrEnv2, osc.frequency);
+
+    [osc, mod].forEach(node => {
+      node.start(when);
+      node.stop(when + length);
+    });
+  }
+}
+
+module.exports = {FmSynth, HarmonicSynth};

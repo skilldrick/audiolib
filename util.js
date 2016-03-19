@@ -1,5 +1,6 @@
-// For a node to act as an input, it must either be an AudioNode or have an input property
-const inputNode = (node) => node instanceof AudioNode ? node : node.input;
+// For a node to act as an input, it must either be an AudioNode/AudioParam or have an input property
+const inputNode = (node) =>
+  (node instanceof AudioNode || node instanceof AudioParam) ? node : node.input;
 
 // Helper for creating an AudioNode-like object, for use with with `connect`
 const node = (input, output) => ({
