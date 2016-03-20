@@ -1,4 +1,4 @@
-import {getCurrentTime} from './audio';
+import { getCurrentTime } from './audio';
 
 class Clock {
   constructor() {
@@ -119,4 +119,4 @@ class Clock {
   }
 };
 
-module.exports = new Clock();
+export default new Clock();
