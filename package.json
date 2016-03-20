@@ -7,7 +7,8 @@
   "main": "build/index.js",
   "jsnext:main": "src/index.js",
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "prepublish": "npm run build"
   },
   "files": [
     "build"
