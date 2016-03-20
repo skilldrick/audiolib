@@ -4,7 +4,7 @@ import {connect, node} from './util';
 import nodes from './nodes';
 
 
-const createReverb = (mix, convolverBuffer) => {
+export const createReverb = (mix, convolverBuffer) => {
   const convolver = ctx.createConvolver();
   convolver.buffer = convolverBuffer;
 
@@ -19,7 +19,7 @@ const createReverb = (mix, convolverBuffer) => {
   return node(input, output);
 };
 
-const createDelayFeedback = (options) => {
+export const createDelayFeedback = (options) => {
   // Set up options
   const dryMix = options.dryMix || 1;
   const wetMix = options.wetMix || 0.5;
@@ -53,7 +53,7 @@ const createDelayFeedback = (options) => {
   return node(input, output);
 };
 
-const createDistortion = (distortion) => {
+export const createDistortion = (distortion) => {
   const hardDistortion = (item) => {
     const deg = Math.PI / 180;
     const k = (distortion - 1) * 200;
@@ -121,16 +121,10 @@ applies the inverse of the function to the range [-1, 0] to create
 a mirrored distortion curve, like above.
 */
 
-const makeDistortionCurve = (func) => {
-  const mirror = (func) => {
-    return (item, i) => {
-      if (i < halfLength) {
-        return -func(-item);
-      } else {
-        return func(item);
-      }
-    };
-  };
+export const makeDistortionCurve = (func) => {
+  const mirror = (func) => (item, i) => (
+    (i < halfLength) ? -func(-item) : func(item)
+  );
 
   //keep within -1,1 range
   const clamp = (items) => {
@@ -149,10 +143,4 @@ const makeDistortionCurve = (func) => {
   const curve = clamp(linearCurve.map(mirror(func)));
 
   return new Float32Array(curve);
-};
-
-module.exports = {
-  createReverb,
-  createDelayFeedback,
-  createDistortion
 };
