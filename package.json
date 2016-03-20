@@ -5,9 +5,14 @@
   "author": "Nick Morgan (@skilldrick)",
   "license": "ISC",
   "main": "build/index.js",
+  "jsnext:main": "src/index.js",
   "scripts": {
     "build": "rollup -c"
   },
+  "files": [
+    "build"
+    "src"
+  ],
   "devDependencies": {
     "babel-preset-es2015-rollup": "^1.1.1",
     "babel-preset-stage-1": "^6.5.0",
