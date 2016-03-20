@@ -1,7 +1,7 @@
-export ajax from './ajax';
-export audio from './audio';
-export clock from './clock';
-export fx from './fx';
-export nodes from './nodes';
-export synth from './synth';
-export util from './util';
+export * as ajax from './ajax';
+export * as audio from './audio';
+export * as clock from './clock';
+export * as fx from './fx';
+export * as nodes from './nodes';
+export * as synth from './synth';
+export * as util from './util';
