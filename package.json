@@ -7,5 +7,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/skilldrick/sine.git"
+  },
+  "devDependencies": {
+    "babel-core": "^6.4.5"
   }
 }
