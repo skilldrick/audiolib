@@ -3,5 +3,9 @@
   "version": "0.0.1",
   "description": "A library for the Web Audio API",
   "author": "Nick Morgan (@skilldrick)",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skilldrick/sine.git"
+  }
 }
