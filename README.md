@@ -1,5 +1,5 @@
-# audiolib
+# Sine
 
-TODO: Give me a better name.
+A library for working with the Web Audio API.
 
-Currently being used for https://github.com/skilldrick/chord-machine
+Currently being used for https://github.com/skilldrick/chord-machine.
