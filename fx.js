@@ -3,8 +3,7 @@ import {getAudioBuffer} from './ajax';
 import {connect, node} from './util';
 import nodes from './nodes';
 
-
-export const createReverb = (mix, convolverBuffer) => {
+const createReverb = (mix, convolverBuffer) => {
   const convolver = ctx.createConvolver();
   convolver.buffer = convolverBuffer;
 
@@ -19,7 +18,7 @@ export const createReverb = (mix, convolverBuffer) => {
   return node(input, output);
 };
 
-export const createDelayFeedback = (options) => {
+const createDelayFeedback = (options) => {
   // Set up options
   const dryMix = options.dryMix || 1;
   const wetMix = options.wetMix || 0.5;
@@ -53,7 +52,7 @@ export const createDelayFeedback = (options) => {
   return node(input, output);
 };
 
-export const createDistortion = (distortion) => {
+const createDistortion = (distortion) => {
   const hardDistortion = (item) => {
     const deg = Math.PI / 180;
     const k = (distortion - 1) * 200;
@@ -121,7 +120,7 @@ applies the inverse of the function to the range [-1, 0] to create
 a mirrored distortion curve, like above.
 */
 
-export const makeDistortionCurve = (func) => {
+const makeDistortionCurve = (func) => {
   const mirror = (func) => (item, i) => (
     (i < halfLength) ? -func(-item) : func(item)
   );
@@ -143,4 +142,10 @@ export const makeDistortionCurve = (func) => {
   const curve = clamp(linearCurve.map(mirror(func)));
 
   return new Float32Array(curve);
+};
+
+module.exports = {
+  createReverb,
+  createDelayFeedback,
+  createDistortion
 };

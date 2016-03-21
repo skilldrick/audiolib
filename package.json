@@ -1,6 +1,6 @@
 {
-  "name": "audiolib",
-  "version": "0.1.0",
+  "name": "Sine",
+  "version": "0.0.0",
   "description": "A library for the Web Audio API",
   "author": "Nick Morgan (@skilldrick)",
   "license": "ISC"
