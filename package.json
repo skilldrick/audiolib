@@ -1,6 +1,6 @@
 {
   "name": "sine",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A library for the Web Audio API",
   "author": "Nick Morgan (@skilldrick)",
   "license": "ISC",
