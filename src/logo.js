@@ -1,14 +1,17 @@
-export default () => {
+export default (el, size) => {
   const canvas = document.createElement('canvas');
-  canvas.width = 200;
-  canvas.height = 200;
-  document.body.insertBefore(canvas, document.body.firstChild);
+
+  const logoSize = size || 100;
+  const xOffset = logoSize / 20;
+  const yOffset = logoSize / 20;
+
+  canvas.width = logoSize + 2 * xOffset;
+  canvas.height = logoSize + 2 * yOffset;
+
+  (el || document.body).appendChild(canvas);
   const c = canvas.getContext('2d');
 
   const twoPi = Math.PI * 2;
-  const logoSize = 100;
-  const xOffset = 10;
-  const yOffset = 10;
   const borderX = logoSize / 2 + xOffset;
   const borderY = logoSize / 2 + yOffset;
   const borderRadius = logoSize / 2;
@@ -17,9 +20,9 @@ export default () => {
   const backgroundColor = "#040";
   const borderColor = "#222";
 
-  const sineWidth = 3;
-  const sineShadowBlur = 10;
-  const borderWidth = 6;
+  const sineWidth = logoSize / 30;
+  const sineShadowBlur = logoSize / 10;
+  const borderWidth = logoSize / 16;
 
   const drawSine = (width, height, xOffset, yOffset) => {
     c.save();
