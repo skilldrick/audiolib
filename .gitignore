@@ -1,3 +1,11 @@
 lib/
 node_modules/
 npm-debug.log
+ajax.js
+audio.js
+clock.js
+fx.js
+logo.js
+nodes.js
+synth.js
+util.js

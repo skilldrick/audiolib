@@ -9,7 +9,7 @@
     "url": "https://github.com/skilldrick/sine.git"
   },
   "scripts": {
-    "compile": "babel -d lib/ src/",
+    "compile": "babel -d . src/",
     "prepublish": "npm run compile"
   },
   "devDependencies": {
