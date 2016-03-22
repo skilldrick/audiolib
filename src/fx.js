@@ -1,16 +1,16 @@
-import {ctx} from './audio';
-import {getAudioBuffer} from './ajax';
-import {connect, node} from './util';
-import nodes from './nodes';
+import { ctx } from './audio';
+import getAudioBuffer from './ajax';
+import { connect, node } from './util';
+import { createGain, createDelay, createFilter } from './nodes';
 
-const createReverb = (mix, convolverBuffer) => {
+export const createReverb = (mix, convolverBuffer) => {
   const convolver = ctx.createConvolver();
   convolver.buffer = convolverBuffer;
 
-  const input = nodes.createGain();
-  const dryMix = nodes.createGain(1 - mix);
-  const wetMix = nodes.createGain(mix);
-  const output = nodes.createGain();
+  const input = createGain();
+  const dryMix = createGain(1 - mix);
+  const wetMix = createGain(mix);
+  const output = createGain();
 
   connect(input, dryMix, output);
   connect(input, convolver, wetMix, output);
@@ -18,7 +18,7 @@ const createReverb = (mix, convolverBuffer) => {
   return node(input, output);
 };
 
-const createDelayFeedback = (options) => {
+export const createDelayFeedback = (options) => {
   // Set up options
   const dryMix = options.dryMix || 1;
   const wetMix = options.wetMix || 0.5;
@@ -27,13 +27,13 @@ const createDelayFeedback = (options) => {
   const cutoff = options.cutoff || 5000;
 
   // Create nodes
-  const input = nodes.createGain();
-  const output = nodes.createGain();
-  const delay = nodes.createDelay(3, delayTime);
-  const feedbackGain = nodes.createGain(feedback);
-  const dryMixNode = nodes.createGain(dryMix);
-  const wetMixNode = nodes.createGain(wetMix);
-  const filter = nodes.createFilter(cutoff);
+  const input = createGain();
+  const output = createGain();
+  const delay = createDelay(3, delayTime);
+  const feedbackGain = createGain(feedback);
+  const dryMixNode = createGain(dryMix);
+  const wetMixNode = createGain(wetMix);
+  const filter = createFilter(cutoff);
 
   // Node graph:
   // input -> dryMixNode ------------------------------------+-> output
@@ -52,7 +52,7 @@ const createDelayFeedback = (options) => {
   return node(input, output);
 };
 
-const createDistortion = (distortion) => {
+export const createDistortion = (distortion) => {
   const hardDistortion = (item) => {
     const deg = Math.PI / 180;
     const k = (distortion - 1) * 200;
@@ -142,10 +142,4 @@ const makeDistortionCurve = (func) => {
   const curve = clamp(linearCurve.map(mirror(func)));
 
   return new Float32Array(curve);
-};
-
-module.exports = {
-  createReverb,
-  createDelayFeedback,
-  createDistortion
 };

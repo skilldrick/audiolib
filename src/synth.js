@@ -1,7 +1,6 @@
-import {ctx} from './audio';
-import fx from './fx';
-import nodes from './nodes';
-import {connect, noteToFreq} from './util';
+import { ctx } from './audio';
+import { createGain, createOscillator } from './nodes';
+import { connect, noteToFreq } from './util';
 
 /*
 Create Attack-Decay-Sustain-Release envelope
@@ -28,7 +27,7 @@ const createAdsrEnvelope = (adsr, when, length) => {
   const decayEnd = Math.min(attackEnd + adsr.decay, releaseStart);
   const releaseEnd = releaseStart + adsr.release;
 
-  const gain = nodes.createGain(0);
+  const gain = createGain(0);
   gain.gain.setValueAtTime(0, when);
 
   // Attack
@@ -48,7 +47,7 @@ const createAdsrEnvelope = (adsr, when, length) => {
 
 class Synth {
   constructor() {
-    this.output = nodes.createGain();
+    this.output = createGain();
   }
 
   playNote = (note, when, length) => {
@@ -60,7 +59,7 @@ class Synth {
   }
 }
 
-class HarmonicSynth extends Synth {
+export class HarmonicSynth extends Synth {
   constructor(adsr, coefficientsOrType) {
     super();
     this.adsr = adsr;
@@ -68,7 +67,7 @@ class HarmonicSynth extends Synth {
   }
 
   playFreq = (freq, when, length) => {
-    const osc = nodes.createOscillator(freq, this.coefficientsOrType);
+    const osc = createOscillator(freq, this.coefficientsOrType);
     const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
 
     connect(osc, adsrEnv, this.output);
@@ -78,7 +77,7 @@ class HarmonicSynth extends Synth {
   }
 };
 
-class FmSynth extends Synth {
+export class FmSynth extends Synth {
   constructor() {
     super();
     this.color = 8;
@@ -86,13 +85,13 @@ class FmSynth extends Synth {
   }
 
   playFreq(freq, when, length) {
-    const osc = nodes.createOscillator(freq, 'square');
-    const mod = nodes.createOscillator(freq * this.color);
+    const osc = createOscillator(freq, 'square');
+    const mod = createOscillator(freq * this.color);
 
     const adsrEnv1 = createAdsrEnvelope(this.adsr, when, length);
     const adsrEnv2 = createAdsrEnvelope(this.adsr, when, length);
 
-    const g = nodes.createGain(this.intensity);
+    const g = createGain(this.intensity);
 
     connect(osc, adsrEnv1, this.output);
     connect(mod, g, adsrEnv2, osc.frequency);
@@ -103,5 +102,3 @@ class FmSynth extends Synth {
     });
   }
 }
-
-module.exports = {FmSynth, HarmonicSynth};

@@ -1,18 +1,18 @@
-import {ctx} from './audio';
+import { ctx } from './audio';
 
-const createFilter = (freq) => {
+export const createFilter = (freq) => {
   const filter = ctx.createBiquadFilter();
   filter.frequency.value = freq;
   return filter;
 };
 
-const createDelay = (maxDelayTime, delayTime) => {
+export const createDelay = (maxDelayTime, delayTime) => {
   const delay = ctx.createDelay(maxDelayTime);
   delay.delayTime.value = delayTime;
   return delay;
 };
 
-const createGain = (gain) => {
+export const createGain = (gain) => {
   const gainNode = ctx.createGain();
   if (gain !== undefined) {
     gainNode.gain.value = gain;
@@ -20,7 +20,7 @@ const createGain = (gain) => {
   return gainNode;
 };
 
-const createOscillator = (frequency, coefficientsOrType) => {
+export const createOscillator = (frequency, coefficientsOrType) => {
   const osc = ctx.createOscillator();
   osc.frequency.value = frequency;
 
@@ -40,11 +40,4 @@ const createOscillator = (frequency, coefficientsOrType) => {
   }
 
   return osc;
-};
-
-module.exports = {
-  createDelay,
-  createGain,
-  createFilter,
-  createOscillator
 };

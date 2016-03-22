@@ -1,4 +1,4 @@
-const logo = () => {
+export default () => {
   const canvas = document.createElement('canvas');
   canvas.width = 200;
   canvas.height = 200;
@@ -55,5 +55,3 @@ const logo = () => {
   c.strokeStyle = borderColor;
   drawCircle(borderX, borderY, borderRadius, false);
 };
-
-module.exports = logo;
