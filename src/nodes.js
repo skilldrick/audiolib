@@ -20,9 +20,10 @@ export const createGain = (gain) => {
   return gainNode;
 };
 
-export const createOscillator = (frequency, coefficientsOrType) => {
+export const createOscillator = (frequency, coefficientsOrType, detune=0) => {
   const osc = ctx.createOscillator();
   osc.frequency.value = frequency;
+  osc.detune.value = detune;
 
   if (Array.isArray(coefficientsOrType)) {
     // Create a periodic wave using an array of harmonic coefficients.

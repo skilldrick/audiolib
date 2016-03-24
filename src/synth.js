@@ -50,8 +50,8 @@ class Synth {
     this.output = createGain();
   }
 
-  playNote = (note, when, length) => {
-    this.playFreq(noteToFreq(note), when, length);
+  playNote = (note, when, length, detune=0) => {
+    this.playFreq(noteToFreq(note), when, length, detune);
   }
 
   connect = (other) => {
@@ -66,8 +66,8 @@ export class HarmonicSynth extends Synth {
     this.coefficientsOrType = coefficientsOrType;
   }
 
-  playFreq = (freq, when, length) => {
-    const osc = createOscillator(freq, this.coefficientsOrType);
+  playFreq = (freq, when, length, detune=0) => {
+    const osc = createOscillator(freq, this.coefficientsOrType, detune);
     const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
 
     connect(osc, adsrEnv, this.output);
@@ -82,11 +82,12 @@ export class FmSynth extends Synth {
     super();
     this.color = 8;
     this.intensity = 1000;
+    this.fmDetune = 0;
   }
 
-  playFreq(freq, when, length) {
-    const osc = createOscillator(freq, 'square');
-    const mod = createOscillator(freq * this.color);
+  playFreq(freq, when, length, detune=0) {
+    const osc = createOscillator(freq, 'square', detune);
+    const mod = createOscillator(freq * this.color, 'sine', this.fmDetune);
 
     const adsrEnv1 = createAdsrEnvelope(this.adsr, when, length);
     const adsrEnv2 = createAdsrEnvelope(this.adsr, when, length);
