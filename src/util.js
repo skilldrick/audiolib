@@ -3,10 +3,11 @@ const inputNode = (node) =>
   (node instanceof AudioNode || node instanceof AudioParam) ? node : node.input;
 
 // Helper for creating an AudioNode-like object, for use with with `connect`
-export const node = (input, output) => ({
+// Use `props` to add extra properties to the object
+export const node = (input, output, props={}) => Object.assign({
   input: inputNode(input),
   connect: (node) => output.connect(node)
-});
+}, props);
 
 // Connect `nodes` together in a chain. Can be AudioNode or node with input property
 export const connect = (...nodes) => nodes.reduce((node1, node2) => {

@@ -8,20 +8,26 @@ export const createReverb = (mix, convolverBuffer) => {
   convolver.buffer = convolverBuffer;
 
   const input = createGain();
-  const dryMix = createGain(1 - mix);
-  const wetMix = createGain(mix);
+  const dryMix = createGain()
+  const wetMix = createGain()
   const output = createGain();
 
   connect(input, dryMix, output);
   connect(input, convolver, wetMix, output);
 
-  return node(input, output);
+  const setMix = (m) => {
+    dryMix.gain.value = 1 - m;
+    wetMix.gain.value = m;
+  };
+
+  setMix(mix);
+
+  return node(input, output, { setMix });
 };
 
 export const createDelayFeedback = (options) => {
   // Set up options
-  const dryMix = options.dryMix || 1;
-  const wetMix = options.wetMix || 0.5;
+  const mix = options.mix || 0.5;
   const delayTime = options.delayTime || 0.5;
   const feedback = options.feedback || 0.2;
   const cutoff = options.cutoff || 5000;
@@ -31,42 +37,74 @@ export const createDelayFeedback = (options) => {
   const output = createGain();
   const delay = createDelay(3, delayTime);
   const feedbackGain = createGain(feedback);
-  const dryMixNode = createGain(dryMix);
-  const wetMixNode = createGain(wetMix);
+  const dryMix = createGain();
+  const wetMix = createGain();
   const filter = createFilter(cutoff);
 
   // Node graph:
-  // input -> dryMixNode ------------------------------------+-> output
-  //   `----> filter -> feedbackGain -> delay -> wetMixNode -'
+  // input -> dryMix ------------------------------------+-> output
+  //   `----> filter -> feedbackGain -> delay -> wetMix -'
   //            ^-------------------------'
 
   // Connect dry chain
-  connect(input, dryMixNode, output);
+  connect(input, dryMix, output);
 
   // Connect wet chain
-  connect(input, filter, feedbackGain, delay, wetMixNode, output);
+  connect(input, filter, feedbackGain, delay, wetMix, output);
 
   // Connect feedback
   connect(delay, filter);
 
-  return node(input, output);
-};
-
-export const createDistortion = (distortion) => {
-  const hardDistortion = (item) => {
-    const deg = Math.PI / 180;
-    const k = (distortion - 1) * 200;
-    return ( 3 + k ) * item * 20 * deg / ( Math.PI + k * Math.abs(item) );
+  const setDelayTime = (d) => {
+    delay.delayTime.value = d;
   };
 
-  const softDistortion = (item) => {
-    return Math.pow(Math.sin(item * Math.PI / 2), 1 / distortion);
+  setDelayTime(delayTime);
+
+  // Duplicated between here and createReverb. TODO: clean up this pattern
+  const setMix = (m) => {
+    dryMix.gain.value = 1 - m;
+    wetMix.gain.value = m;
+  };
+
+  setMix(mix);
+
+  return node(input, output, {
+    setDelayTime,
+    setMix
+  });
+};
+
+export const createDistortion = (distortion, type='soft') => {
+  const distortionFactory = (intensity, type) => {
+    if (type == 'hard') {
+      return (item) => {
+        const deg = Math.PI / 180;
+        const k = (intensity - 1) * 200;
+        return ( 3 + k ) * item * 20 * deg / ( Math.PI + k * Math.abs(item) );
+      };
+    } else if (type == 'soft') {
+      return (item) => {
+        return Math.pow(Math.sin(item * Math.PI / 2), 1 / intensity);
+      };
+    } else {
+      throw new Error('Unknown distortion type');
+    }
   };
 
   const waveShaperNode = ctx.createWaveShaper();
-  waveShaperNode.curve = makeDistortionCurve(softDistortion);
   waveShaperNode.oversample = '4x';
-  return waveShaperNode;
+
+  const input = waveShaperNode;
+  const output = waveShaperNode;
+
+  const setDistortion = (distortion, type='soft') => {
+    waveShaperNode.curve = makeDistortionCurve(distortionFactory(distortion, type));
+  }
+
+  setDistortion(distortion, type);
+
+  return node(input, output, { setDistortion });
 };
 
 /*
