@@ -83,6 +83,7 @@ export class FmSynth extends Synth {
     this.color = 8;
     this.intensity = 1000;
     this.fmDetune = 0;
+    this.adsr = {};
   }
 
   playFreq(freq, when, length, detune=0) {
