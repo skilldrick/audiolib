@@ -104,3 +104,52 @@ export class FmSynth extends Synth {
     });
   }
 }
+
+// A HarmonicSynth with a simple interface for modifying coefficients.
+// setOddEven: sets ratio of odd to even harmonics
+// setLowHigh: sets dominant harmonic (harmonics decay on either side of this)
+export class EasyHarmonicSynth extends HarmonicSynth {
+  constructor(adsr={}) {
+    super(adsr, []);
+    this._oddEven = 0;
+    this._lowHigh = 0;
+    this.resetCoefficients();
+  }
+
+  setOddEven = (value) => {
+    this._oddEven = value;
+    this.resetCoefficients();
+  };
+
+  setLowHigh = (value) => {
+    this._lowHigh = value;
+    this.resetCoefficients();
+  };
+
+  resetCoefficients() {
+    this.coefficientsOrType = this.calculateCoefficients();
+  }
+
+  calculateCoefficients() {
+    const coefficientCount = 10;
+    const dominantCoefficient = Math.floor(this._lowHigh * (coefficientCount - 1));
+
+    // Set odd and even coefficient level based on odd:even ratio
+    const setOddEven = (el, i) => {
+      // odd coefficients are even indexes, because coefficients start at 1
+      return (i % 2 == 0) ? 1 - this._oddEven : this._oddEven;
+    };
+
+    const similarity = (a, b) => 1 / (Math.abs(a - b) + 1);
+
+    // Set coefficient gain based on similarity to dominant coefficient
+    const setGain = (el, i) => {
+      const gain = similarity(i, dominantCoefficient);
+      return el * gain;
+    };
+
+    const coefficients = Array.from(new Array(coefficientCount));
+
+    return coefficients.map(setOddEven).map(setGain);
+  }
+}
