@@ -8,6 +8,7 @@ class Clock {
     this.timeoutTime = this.foregroundTimeoutTime;
     this.callbacks = new Set();
     this.playing = false;
+    this.setBpm(120);
   }
 
   addCallback(cb) {
