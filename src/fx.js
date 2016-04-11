@@ -31,12 +31,12 @@ export class FeedbackDelay extends MixNode {
 
     // Create nodes
     this.delay = createDelay(3, delayTime);
-    this.feedbackGain = createGain(feedback);
+    this.feedbackGain = createGain();
     this.filter = createFilter(cutoff);
 
     // Set up nodes
     this.setDelayTime(delayTime);
-    this.setMix(mix);
+    this.setFeedbackGain(feedback);
 
     // Node graph:
     // input -> dryMix ------------------------------------+-> output
@@ -51,6 +51,10 @@ export class FeedbackDelay extends MixNode {
 
     // Feedback
     connect(this.delay, this.filter);
+  }
+
+  setFeedbackGain = (gain) => {
+    this.feedbackGain.gain.value = gain;
   }
 
   setDelayTime = (delayTime) => {
