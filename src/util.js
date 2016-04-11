@@ -1,3 +1,5 @@
+import { createGain } from './nodes';
+
 // For a node to act as an input, it must either be an AudioNode/AudioParam or have an input property
 const inputNode = (node) =>
   (node instanceof AudioNode || node instanceof AudioParam) ? node : node.input;
@@ -23,3 +25,30 @@ export const detune = (freq, percent) => {
   const detuneScalar = 1 + Math.random() * amount * 2 - amount;
   return freq * detuneScalar;
 };
+
+// A superclass for AudioNode-like objects
+export class Node {
+  constructor() {
+    this.input = createGain();
+    this.output = createGain();
+  }
+
+  connect(node) {
+    this.output.connect(node);
+  }
+}
+
+// A superclass for AudioNode-like objects with dry:wet mix
+export class MixNode extends Node {
+  constructor(mix) {
+    super();
+    this.wetMix = createGain();
+    this.dryMix = createGain();
+    this.setMix(mix);
+  }
+
+  setMix = (mix) => {
+    this.dryMix.gain.value = 1 - mix;
+    this.wetMix.gain.value = mix;
+  }
+}

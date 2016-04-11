@@ -1,82 +1,80 @@
 import { ctx } from './audio';
 import getAudioBuffer from './ajax';
-import { connect, node } from './util';
+import { connect, node, Node, MixNode } from './util';
 import { createGain, createDelay, createFilter } from './nodes';
 
-export const createReverb = (mix, convolverBuffer) => {
-  const convolver = ctx.createConvolver();
-  convolver.buffer = convolverBuffer;
 
-  const input = createGain();
-  const dryMix = createGain()
-  const wetMix = createGain()
-  const output = createGain();
+export class Reverb extends MixNode {
+  constructor(mix, convolverBuffer) {
+    super(mix);
 
-  connect(input, dryMix, output);
-  connect(input, convolver, wetMix, output);
+    this.convolver = ctx.createConvolver();
+    this.convolver.buffer = convolverBuffer;
 
-  const setMix = (m) => {
-    dryMix.gain.value = 1 - m;
-    wetMix.gain.value = m;
-  };
+    // Dry chain
+    connect(this.input, this.dryMix, this.output);
 
-  setMix(mix);
+    // Wet chain
+    connect(this.input, this.convolver, this.wetMix, this.output);
+  }
+}
 
-  return node(input, output, { setMix });
-};
+export class FeedbackDelay extends MixNode {
+  constructor(options) {
+    // Set up options
+    const mix = options.mix || 0.5;
+    const delayTime = options.delayTime || 0.5;
+    const feedback = options.feedback || 0.2;
+    const cutoff = options.cutoff || 5000;
 
-export const createDelayFeedback = (options) => {
-  // Set up options
-  const mix = options.mix || 0.5;
-  const delayTime = options.delayTime || 0.5;
-  const feedback = options.feedback || 0.2;
-  const cutoff = options.cutoff || 5000;
+    super(mix);
 
-  // Create nodes
-  const input = createGain();
-  const output = createGain();
-  const delay = createDelay(3, delayTime);
-  const feedbackGain = createGain(feedback);
-  const dryMix = createGain();
-  const wetMix = createGain();
-  const filter = createFilter(cutoff);
+    // Create nodes
+    this.delay = createDelay(3, delayTime);
+    this.feedbackGain = createGain(feedback);
+    this.filter = createFilter(cutoff);
 
-  // Node graph:
-  // input -> dryMix ------------------------------------+-> output
-  //   `----> filter -> feedbackGain -> delay -> wetMix -'
-  //            ^-------------------------'
+    // Set up nodes
+    this.setDelayTime(delayTime);
+    this.setMix(mix);
 
-  // Connect dry chain
-  connect(input, dryMix, output);
+    // Node graph:
+    // input -> dryMix ------------------------------------+-> output
+    //   `----> filter -> feedbackGain -> delay -> wetMix -'
+    //            ^-------------------------'
 
-  // Connect wet chain
-  connect(input, filter, feedbackGain, delay, wetMix, output);
+    // Dry chain
+    connect(this.input, this.dryMix, this.output);
 
-  // Connect feedback
-  connect(delay, filter);
+    // Wet chain
+    connect(this.input, this.filter, this.feedbackGain, this.delay, this.wetMix, this.output);
 
-  const setDelayTime = (d) => {
-    delay.delayTime.value = d;
-  };
+    // Feedback
+    connect(this.delay, this.filter);
+  }
 
-  setDelayTime(delayTime);
+  setDelayTime = (delayTime) => {
+    this.delay.delayTime.value = delayTime;
+  }
+}
 
-  // Duplicated between here and createReverb. TODO: clean up this pattern
-  const setMix = (m) => {
-    dryMix.gain.value = 1 - m;
-    wetMix.gain.value = m;
-  };
+export class Distortion extends Node {
+  constructor(distortion, type='soft') {
+    super();
 
-  setMix(mix);
+    this.waveShaperNode = ctx.createWaveShaper();
+    this.waveShaperNode.oversample = '4x';
+    this.setDistortion(distortion, type);
 
-  return node(input, output, {
-    setDelayTime,
-    setMix
-  });
-};
+    connect(this.input, this.waveShaperNode, this.output);
+  }
 
-export const createDistortion = (distortion, type='soft') => {
-  const distortionFactory = (intensity, type) => {
+  setDistortion = (distortion, type='soft') => {
+    this.waveShaperNode.curve = this.makeDistortionCurve(
+      this.distortionFactory(distortion, type));
+  }
+
+  distortionFactory(intensity, type) {
     if (type == 'hard') {
       return (item) => {
         const deg = Math.PI / 180;
@@ -90,94 +88,80 @@ export const createDistortion = (distortion, type='soft') => {
     } else {
       throw new Error('Unknown distortion type');
     }
-  };
-
-  const waveShaperNode = ctx.createWaveShaper();
-  waveShaperNode.oversample = '4x';
-
-  const input = waveShaperNode;
-  const output = waveShaperNode;
-
-  const setDistortion = (distortion, type='soft') => {
-    waveShaperNode.curve = makeDistortionCurve(distortionFactory(distortion, type));
   }
 
-  setDistortion(distortion, type);
+  /*
+  A distortion curve maps input to output. A straight line from
+  (-1, -1) to (1, 1) leaves the sound unchanged. A straight line
+  from (-1, 0.5) to (1, 0.5) is the equivalent of applying a gain
+  of 0.5 (the output level is half the input level).
 
-  return node(input, output, { setDistortion });
-};
+                   output
+                    1|         .
+                     |       .
+                     |     .
+                     |   .
+                     | .
+           ----------0---------- input
+          -1       . |         1
+                 .   |
+               .     |
+             .       |
+           .       -1|
 
-/*
-A distortion curve maps input to output. A straight line from
-(-1, -1) to (1, 1) leaves the sound unchanged. A straight line
-from (-1, 0.5) to (1, 0.5) is the equivalent of applying a gain
-of 0.5 (the output level is half the input level).
+  If the curve is not a straight line (see below), different parts of
+  the signal will be amplified differently from others, changing the
+  shape of the waveform. This produces distortion. The curve below
+  also increases the overall level of the signal, as quieter samples
+  are boosted louder.
 
-                 output
-                  1|         .
-                   |       .
-                   |     .
-                   |   .
-                   | .
-         ----------0---------- input
-        -1       . |         1
-               .   |
-             .     |
-           .       |
-         .       -1|
+                   output
+                    1|         .
+                     |     .
+                     |   .
+                     | .
+                     |.
+           ----------0---------- input
+          -1        .|         1
+                   . |
+                 .   |
+               .     |
+           .       -1|
 
-If the curve is not a straight line (see below), different parts of
-the signal will be amplified differently from others, changing the
-shape of the waveform. This produces distortion. The curve below
-also increases the overall level of the signal, as quieter samples
-are boosted louder.
+  A mirrored distortion curve (negative inputs are modified by the same
+  amount as positive inputs) is usually best, as it prevents the output
+  from having a DC offset. The curve above is mirrored.
 
-                 output
-                  1|         .
-                   |     .
-                   |   .
-                   | .
-                   |.
-         ----------0---------- input
-        -1        .|         1
-                 . |
-               .   |
-             .     |
-         .       -1|
+  The WaveShaperNode uses a Float32Array to represent the distortion
+  curve. The indices of the array correspond to the input range [-1, 1]
+  and the values in the array correspond to the output range [-1, 1].
 
-A mirrored distortion curve (negative inputs are modified by the same
-amount as positive inputs) is usually best, as it prevents the output
-from having a DC offset. The curve above is mirrored.
+  `makeDistortionCurve` takes a func, applies it to the range [0, 1], and
+  applies the inverse of the function to the range [-1, 0] to create
+  a mirrored distortion curve, like above.
+  */
 
-The WaveShaperNode uses a Float32Array to represent the distortion
-curve. The indices of the array correspond to the input range [-1, 1]
-and the values in the array correspond to the output range [-1, 1].
+  makeDistortionCurve(func) {
+    const mirror = (func) => (item, i) => (
+      (i < halfLength) ? -func(-item) : func(item)
+    );
 
-makeDistortionCurve takes a func, applies it to the range [0, 1], and
-applies the inverse of the function to the range [-1, 0] to create
-a mirrored distortion curve, like above.
-*/
+    //keep within -1,1 range
+    const clamp = (items) => {
+      return items.map((item) => Math.max(Math.min(item, 1), -1));
+    }
 
-const makeDistortionCurve = (func) => {
-  const mirror = (func) => (item, i) => (
-    (i < halfLength) ? -func(-item) : func(item)
-  );
+    const length = Math.pow(2, 16);
+    const halfLength = length / 2;
+    const linearCurve = [];
 
-  //keep within -1,1 range
-  const clamp = (items) => {
-    return items.map((item) => Math.max(Math.min(item, 1), -1));
+    // create linear identity curve
+    for (let i = 0; i < length; i++) {
+      linearCurve[i] = i / halfLength - 1;
+    }
+
+    const curve = clamp(linearCurve.map(mirror(func)));
+
+    return new Float32Array(curve);
   }
-
-  const length = Math.pow(2, 16);
-  const halfLength = length / 2;
-  const linearCurve = [];
-
-  // create linear identity curve
-  for (let i = 0; i < length; i++) {
-    linearCurve[i] = i / halfLength - 1;
-  }
-
-  const curve = clamp(linearCurve.map(mirror(func)));
-
-  return new Float32Array(curve);
-};
+}
