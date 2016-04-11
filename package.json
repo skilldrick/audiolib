@@ -8,6 +8,9 @@
     "type": "git",
     "url": "https://github.com/skilldrick/sine.git"
   },
+  "files": [
+    "*.js"
+  ],
   "scripts": {
     "compile": "babel -d . src/",
     "prepublish": "npm run compile"
