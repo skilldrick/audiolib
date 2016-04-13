@@ -16,7 +16,7 @@ class Clock {
   }
 
   removeCallback(cb) {
-    this.callbacks.remove(cb);
+    this.callbacks.delete(cb);
   }
 
   setBpm(bpm) {
