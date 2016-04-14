@@ -1,6 +1,6 @@
 import { ctx } from './audio';
 import { createGain, createOscillator } from './nodes';
-import { connect, noteToFreq } from './util';
+import { connect, noteToFreq, SourceNode } from './util';
 
 /*
 Create Attack-Decay-Sustain-Release envelope
@@ -45,17 +45,10 @@ const createAdsrEnvelope = (adsr, when, length) => {
   return gain;
 }
 
-class Synth {
-  constructor() {
-    this.output = createGain();
-  }
-
+// Subclasses of Synth must define this.playFreq
+export class Synth extends Node {
   playNote = (note, when, length, detune=0) => {
     this.playFreq(noteToFreq(note), when, length, detune);
-  }
-
-  connect = (other) => {
-    this.output.connect(other);
   }
 }
 

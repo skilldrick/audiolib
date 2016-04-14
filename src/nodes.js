@@ -20,6 +20,13 @@ export const createGain = (gain) => {
   return gainNode;
 };
 
+export const createBufferSource = (buffer, playbackRate=1) => {
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.playbackRate.value = playbackRate;
+  return source;
+};
+
 export const createOscillator = (frequency, coefficientsOrType, detune=0) => {
   const osc = ctx.createOscillator();
   osc.frequency.value = frequency;
