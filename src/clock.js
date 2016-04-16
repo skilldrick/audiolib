@@ -92,15 +92,23 @@ class Clock {
       return;
     }
 
+    // Figure out when to play the next beat
+    const when = (fractionalBeat=0) => {
+      if (fractionalBeat < 0 || fractionalBeat >= 1) {
+        throw new Error("This function only takes values between 0 and 1.");
+      }
+
+      return now + fractionalBeat * this.beatLength + timeUntilBeat;
+    };
+
     for (let cb of this.callbacks) {
       /*
       * callbacks are called for every beat
       * beat: the next beat to enqueue
-      * now: current time
-      * timeUntilBeat: time delta between now and when beat is due
-      * beatLength: length of one beat
+      * when: a function that returns when to play the current beat
+      * beatLength: the length of one beat
       * */
-      cb(beat, now, timeUntilBeat, this.beatLength);
+      cb(beat, when, this.beatLength);
     }
   }
 
