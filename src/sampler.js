@@ -10,7 +10,7 @@ export default class Sampler extends Node {
 
   play = (sampleName, when, playbackRate=1) => {
     const source = createBufferSource(this.bufferMap[sampleName], playbackRate);
-    connect(source, ctx.destination);
+    connect(source, this.output);
     source.start(when);
     return source;
   }
