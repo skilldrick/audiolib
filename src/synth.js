@@ -1,6 +1,6 @@
 import { ctx } from './audio';
 import { createGain, createOscillator } from './nodes';
-import { connect, noteToFreq, SourceNode } from './util';
+import { connect, noteToFreq, Node } from './util';
 
 /*
 Create Attack-Decay-Sustain-Release envelope
