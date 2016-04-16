@@ -11,12 +11,12 @@ class Clock {
     this.setBpm(120);
   }
 
-  addCallback(cb) {
+  onBeat(cb) {
     this.callbacks.add(cb);
   }
 
-  removeCallback(cb) {
-    this.callbacks.delete(cb);
+  clearCallbacks() {
+    this.callbacks.clear();
   }
 
   setBpm(bpm) {
