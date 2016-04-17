@@ -101,14 +101,16 @@ class Clock {
       return now + fractionalBeat * this.beatLength + timeUntilBeat;
     };
 
+    const length = (numberOfBeats) => numberOfBeats * this.beatLength;
+
     for (let cb of this.callbacks) {
       /*
       * callbacks are called for every beat
       * beat: the next beat to enqueue
       * when: a function that returns when to play the current beat
-      * beatLength: the length of one beat
+      * length: a function that returns the length of a note based on number of beats
       * */
-      cb(beat, when, this.beatLength);
+      cb(beat, when, length);
     }
   }
 
