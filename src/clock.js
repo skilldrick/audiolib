@@ -6,17 +6,12 @@ class Clock {
     this.backgroundTimeoutTime = 1000;
     this.foregroundTimeoutTime = 100;
     this.timeoutTime = this.foregroundTimeoutTime;
-    this.callbacks = new Set();
     this.playing = false;
     this.setBpm(120);
   }
 
   onBeat(cb) {
-    this.callbacks.add(cb);
-  }
-
-  clearCallbacks() {
-    this.callbacks.clear();
+    this.callback = cb;
   }
 
   setBpm(bpm) {
@@ -59,8 +54,8 @@ class Clock {
   }
 
   /*
-  * tick is responsible for calling the callbacks for every beat once and only once.
-  * It calls the callbacks ahead of time, potentially triggering multiple beats
+  * tick is responsible for calling the callback for every beat once and only once.
+  * It calls the callback ahead of time, potentially triggering multiple beats
   * in one go.
   *
   * The lookahead is kept as short as possible so we can react quickly to tempo changes,
@@ -77,15 +72,15 @@ class Clock {
     // Math.max to ensure nextBeat can't be less than thisBeat
     const nextBeat = Math.max(thisBeat, Math.ceil(timeInBeats + lookahead));
 
-    // call callbacks for all beats between thisBeat and nextBeat
+    // call callback for all beats between thisBeat and nextBeat
     for (let i = thisBeat; i < nextBeat; i++) {
-      this.callCallbacks(i, now, (i - timeInBeats) * this.beatLength);
+      this.callCallback(i, now, (i - timeInBeats) * this.beatLength);
     }
 
     this.beat = nextBeat;
   }
 
-  callCallbacks(beat, now, timeUntilBeat) {
+  callCallback(beat, now, timeUntilBeat) {
     // If timeUntilBeat is negative, we weren't able to keep up
     if (timeUntilBeat < 0) {
       console.warn("Clock skipped beats.");
@@ -101,17 +96,15 @@ class Clock {
       return now + fractionalBeat * this.beatLength + timeUntilBeat;
     };
 
-    const length = (numberOfBeats) => numberOfBeats * this.beatLength;
+    const length = (lengthInBeats) => lengthInBeats * this.beatLength;
 
-    for (let cb of this.callbacks) {
-      /*
-      * callbacks are called for every beat
-      * beat: the next beat to enqueue
-      * when: a function that returns when to play the current beat
-      * length: a function that returns the length of a note based on number of beats
-      * */
-      cb(beat, when, length);
-    }
+    /*
+    * callback is called for every beat
+    * beat: the next beat to enqueue
+    * when: a function that returns when to play the current beat
+    * length: a function that returns the length of a note based on length in beats
+    * */
+    this.callback && this.callback(beat, when, length);
   }
 
   /*
