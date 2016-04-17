@@ -12,9 +12,8 @@ export default class Scheduler {
   }
 
   // Add a looping set of notes.
-  addLoop(beginOffset, loopLength, notes) {
+  addLoop(loopLength, notes) {
     this.loops.push({
-      beginOffset,
       loopLength,
       partitionedNotes: this.partition(notes)
     });
@@ -37,12 +36,12 @@ export default class Scheduler {
     clock.onBeat((beat, when, length) => {
       this.loops.forEach(loop => {
         // Calculate beat within loop
-        const loopBeat = beat % loop.loopLength + loop.beginOffset;
+        const loopBeat = beat % loop.loopLength;
         // Get notes to play this beat
         const notes = loop.partitionedNotes[loopBeat];
 
         notes && notes.forEach(note => {
-          this.processNote(note, when(note.beatOffset - loopBeat), length);
+          this.processNote(note, when(note.beatOffset - loopBeat), length(note.length));
         });
       });
     });
