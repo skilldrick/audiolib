@@ -49,6 +49,10 @@ export default class Scheduler {
     clock.start();
   }
 
+  pause() {
+    clock.pause();
+  }
+
   stop() {
     clock.stop();
   }
