@@ -27,7 +27,7 @@ export const createBufferSource = (buffer, playbackRate=1) => {
   return source;
 };
 
-export const createDynamicsCompressor = (options) => {
+export const createDynamicsCompressor = (options={}) => {
   const defaults = {
     threshold: -30,
     knee: 20,

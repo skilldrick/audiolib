@@ -20,7 +20,7 @@ export class Reverb extends MixNode {
 }
 
 export class FeedbackDelay extends MixNode {
-  constructor(options) {
+  constructor(options={}) {
     // Set up options
     const mix = options.mix || 0.5;
     const delayTime = options.delayTime || 0.5;
