@@ -30,6 +30,10 @@ export class Node {
     connect(this.output, node);
   }
 
+  disconnect() {
+    this.output.disconnect();
+  }
+
   setInputGain(gain) {
     this.input.gain.value = gain;
   }
