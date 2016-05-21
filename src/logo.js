@@ -1,15 +1,30 @@
 export default (el, size) => {
+  const fixForRetina = (canvas, c, width, height) => {
+    const pixelRatio = window.devicePixelRatio || 1;
+
+    canvas.width = width * pixelRatio;
+    canvas.height = height * pixelRatio;
+
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    c.scale(pixelRatio, pixelRatio);
+  };
+
   const canvas = document.createElement('canvas');
 
-  const logoSize = size || 100;
+  const logoSize = (size || 100);
   const xOffset = logoSize / 20;
   const yOffset = logoSize / 20;
 
-  canvas.width = logoSize + 2 * xOffset;
-  canvas.height = logoSize + 2 * yOffset;
+  const width = logoSize + 2 * xOffset;
+  const height = logoSize + 2 * yOffset;
 
   (el || document.body).appendChild(canvas);
   const c = canvas.getContext('2d');
+
+  fixForRetina(canvas, c, width, height);
+
 
   const twoPi = Math.PI * 2;
   const borderX = logoSize / 2 + xOffset;
