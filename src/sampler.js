@@ -7,15 +7,23 @@ export class SingleBufferSampler extends Node {
   constructor(buffer, offsetMap) {
     super();
     this.buffer = buffer;
-    this.offsetMap = offsetMap;
+    this.setOffsets(offsetMap);
   }
 
   play = (sampleName, when, length, playbackRate=1) => {
+    const offset = this.offsetMap[sampleName];
+    this.playOffset(offset, when, length, playbackRate);
+  }
+
+  playOffset = (offset, when, length, playbackRate=1) => {
     const source = createBufferSource(this.buffer, playbackRate);
     connect(source, this.output);
-    const offset = this.offsetMap[sampleName];
     source.start(when, offset, length);
     return source;
+  }
+
+  setOffsets(offsetMap) {
+    this.offsetMap = offsetMap;
   }
 }
 
