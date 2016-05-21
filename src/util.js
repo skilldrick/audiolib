@@ -50,6 +50,9 @@ export class MixNode extends Node {
     this.wetMix = createGain();
     this.dryMix = createGain();
     this.setMix(mix);
+
+    connect(this.input, this.dryMix, this.output);
+    connect(this.wetMix, this.output);
   }
 
   setMix = (mix) => {
