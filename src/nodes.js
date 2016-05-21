@@ -111,7 +111,6 @@ const createCoefficients = (options) => {
 */
 export const createOscillator = (...args) => {
   const options = oscillatorOptions(args);
-  console.log(options);
 
   const osc = ctx.createOscillator();
   osc.frequency.value = options.frequency;
