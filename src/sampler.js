@@ -4,7 +4,9 @@ import { ctx, getCurrentTime } from './audio';
 import { connect, Node } from './util';
 import { createBufferSource, createGain } from './nodes';
 
-// A SingleBufferSampler takes a buffer and a map of names to offsets
+// A SingleBufferSampler takes a buffer and
+// a map of sample names to offsets in seconds
+// e.g. { A: 0, S: 1.5, D: 10, F: 11 }
 export class SingleBufferSampler extends Node {
   constructor(buffer, offsetMap) {
     super();
@@ -19,16 +21,26 @@ export class SingleBufferSampler extends Node {
       sample.offset,
       when,
       sample.length,
+      sample.gain,
       sample.playbackRate,
       sample.fadeIn,
       sample.fadeOut
     );
   }
 
-  playOffset = (offset, when, length, playbackRate=1, fadeIn=0, fadeOut=0) => {
+  playOffset = (
+    offset,
+    when,
+    length,
+    gain=1,
+    playbackRate=1,
+    fadeIn=0,
+    fadeOut=0
+  ) => {
     const source = createBufferSource(this.buffer, playbackRate);
     const envelope = this.createEnvelope(fadeIn, fadeOut, when, length);
-    connect(source, envelope, this.output);
+    const gainNode = createGain(gain);
+    connect(source, envelope, gainNode, this.output);
     source.start(when, offset, length);
     return source;
   }
@@ -52,16 +64,28 @@ export class SingleBufferSampler extends Node {
     return gain;
   }
 
+  // Initialize this.sampleMap with default values for each sample property
   setSampleMap(offsetMap) {
     this.sampleMap = _.mapValues(offsetMap, (value, key) => {
       return {
-        offset: value,
-        name: key,
+        offset:       value,
+        name:         key,
         playbackRate: 1,
-        length: 0.2,
-        fadeIn: 0,
-        fadeOut: 0
+        gain:         1,
+        length:       0.2,
+        fadeIn:       0,
+        fadeOut:      0
       };
+    });
+  }
+
+  // Override gain values in this.sampleMap with a map of sample names to gains
+  // e.g. { A: 0.5, S: 0.8, D: 1.2, F: 1.5 }
+  setGains(gainMap) {
+    _.forOwn(this.sampleMap, (value, key) => {
+      if (gainMap[key] !== undefined) {
+        this.sampleMap[key].gain = gainMap[key];
+      }
     });
   }
 }
