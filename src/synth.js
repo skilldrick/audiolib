@@ -1,4 +1,4 @@
-import { ctx } from './audio';
+import { getCurrentTime, ctx } from './audio';
 import { createGain, createOscillator } from './nodes';
 import { connect, noteToFreq, Node } from './util';
 
@@ -68,9 +68,9 @@ export class Synth extends Node {
     this.notesPlaying[freq] = this.playFreq(freq, when, length, detune);
   }
 
-  stopNote = (note, when) => {
+  stopNote = (note) => {
     const freq = noteToFreq(note);
-    this.stopFreq(freq, when);
+    this.stopFreq(freq);
   }
 }
 
@@ -93,18 +93,20 @@ export class HarmonicSynth extends Synth {
     return [osc, adsrEnv];
   }
 
-  stopFreq = (freq, when) => {
+  stopFreq = (freq) => {
     const [note, env] = this.notesPlaying[freq] || [];
 
     if (note) {
-      const releaseEnd = when + this.adsr.release;
+      const now = getCurrentTime();
+      const releaseEnd = now + this.adsr.release;
 
       // Cancel ADSR
       env.gain.cancelScheduledValues(0);
 
       // Add new release
-      env.gain.setValueAtTime(1, when);
+      env.gain.setValueAtTime(env.gain.value, now);
       env.gain.linearRampToValueAtTime(0, releaseEnd);
+
       try {
         note.stop(releaseEnd);
       } catch (e) { }
