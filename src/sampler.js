@@ -79,14 +79,23 @@ export class SingleBufferSampler extends Node {
     });
   }
 
-  // Override gain values in this.sampleMap with a map of sample names to gains
-  // e.g. { A: 0.5, S: 0.8, D: 1.2, F: 1.5 }
-  setGains(gainMap) {
+  // Override `property` in each sample, if contained in `map`
+  setSampleProperties(map, property) {
     _.forOwn(this.sampleMap, (value, key) => {
-      if (gainMap[key] !== undefined) {
-        this.sampleMap[key].gain = gainMap[key];
+      if (map[key] !== undefined) {
+        this.sampleMap[key][property] = map[key];
       }
     });
+  }
+
+  // Override gain values in this.sampleMap with a map of sample names to gains
+  // e.g. { A: 0.5, S: 0.8, D: 1.2, F: 1.5 }
+  setGains(map) {
+    this.setSampleProperties(map, 'gain');
+  }
+
+  setLengths(map) {
+    this.setSampleProperties(map, 'length');
   }
 }
 
