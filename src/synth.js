@@ -55,7 +55,30 @@ const createReleaseEnvelope = (release, when) => {
   return gain;
 }
 
-// Subclasses of Synth must define this.playFreq and this.stopFreq
+const validateAdsr = (adsr) => {
+  const expectedFields = [
+    'attack', 'decay', 'sustain', 'release'
+  ];
+
+  if (!adsr) {
+    throw new Error("adsr required");
+  }
+
+  expectedFields.forEach(field => {
+    const value = adsr[field];
+
+    if (value === undefined) {
+      throw new Error(field + " in adsr is required");
+    }
+  });
+
+  return adsr;
+}
+
+// Subclasses of Synth must define this.playFreq, which plays
+// the specified frequency at the specified time. This method
+// should return an object with a stop method, which stops the
+// note, preferably with the appropriate release.
 export class Synth extends Node {
   constructor() {
     super();
@@ -68,16 +91,33 @@ export class Synth extends Node {
     this.notesPlaying[freq] = this.playFreq(freq, when, length, detune);
   }
 
-  stopNote = (note) => {
+  stopNote = (note, when) => {
     const freq = noteToFreq(note);
-    this.stopFreq(freq);
+    this.stopFreq(freq, when);
+  }
+
+  stopFreq = (freq, when) => {
+    const note = this.notesPlaying[freq];
+
+    if (note) {
+      note.stop(when);
+    }
   }
 }
 
+/*
+  Example
+    new HarmonicSynth({
+      attack: 0.001,
+      decay: 0.1,
+      sustain: 0.4,
+      release: 0.2
+    }, [1, 1, 1, 1, 1]);
+*/
 export class HarmonicSynth extends Synth {
   constructor(adsr, coefficientsOrType) {
     super();
-    this.adsr = adsr;
+    this.adsr = validateAdsr(adsr);
     this.coefficientsOrType = coefficientsOrType;
   }
 
@@ -90,38 +130,46 @@ export class HarmonicSynth extends Synth {
     osc.start(when);
     osc.stop(when + length + this.adsr.release);
 
-    return [osc, adsrEnv];
-  }
+    return {
+      stop: (when) => {
+        const releaseEnd = when + this.adsr.release;
 
-  stopFreq = (freq) => {
-    const [note, env] = this.notesPlaying[freq] || [];
+        // Cancel ADSR
+        adsrEnv.gain.cancelScheduledValues(0);
 
-    if (note) {
-      const now = getCurrentTime();
-      const releaseEnd = now + this.adsr.release;
+        // Add new release
+        adsrEnv.gain.setValueAtTime(adsrEnv.gain.value, when);
+        adsrEnv.gain.linearRampToValueAtTime(0, releaseEnd);
 
-      // Cancel ADSR
-      env.gain.cancelScheduledValues(0);
+        try {
+          osc.stop(releaseEnd);
+        } catch (e) { }
 
-      // Add new release
-      env.gain.setValueAtTime(env.gain.value, now);
-      env.gain.linearRampToValueAtTime(0, releaseEnd);
-
-      try {
-        note.stop(releaseEnd);
-      } catch (e) { }
-      delete this.notesPlaying[freq];
-    }
+        delete this.notesPlaying[freq];
+      }
+    };
   }
 };
 
+/*
+  Example
+    new FmSynth({
+      attack: 0.001,
+      decay: 0.1,
+      sustain: 0.4,
+      release: 0.2
+    }, {
+      color: 3,
+      intensity: 500
+    });
+*/
 export class FmSynth extends Synth {
-  constructor() {
+  constructor(adsr, settings) {
     super();
-    this.color = 8;
-    this.intensity = 1000;
-    this.fmDetune = 0;
-    this.adsr = {};
+    this.color = settings.color || 8;
+    this.intensity = settings.intensity || 1000;
+    this.fmDetune = settings.fmDetune || 0;
+    this.adsr = validateAdsr(adsr);
   }
 
   playFreq(freq, when, length, detune=0) {
@@ -140,6 +188,29 @@ export class FmSynth extends Synth {
       node.start(when);
       node.stop(when + length);
     });
+
+    return {
+      stop: (when) => {
+        const releaseEnd = when + this.adsr.release;
+
+        // Cancel ADSR
+        [adsrEnv1, adsrEnv2].forEach(env => {
+          env.gain.cancelScheduledValues(0);
+
+          // Add new release
+          env.gain.setValueAtTime(env.gain.value, when);
+          env.gain.linearRampToValueAtTime(0, releaseEnd);
+        });
+
+        [osc, mod].forEach(node => {
+          try {
+            node.stop(releaseEnd);
+          } catch (e) { }
+        });
+
+        delete this.notesPlaying[freq];
+      }
+    };
   }
 }
 
