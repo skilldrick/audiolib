@@ -86,7 +86,6 @@ export class Synth extends Node {
   }
 
   playNote = (note, when, length, detune=0) => {
-    this.stopNote(note, when);
     const freq = noteToFreq(note);
     this.notesPlaying[freq] = this.playFreq(freq, when, length, detune);
   }
