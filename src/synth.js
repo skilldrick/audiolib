@@ -164,7 +164,7 @@ export class HarmonicSynth extends Synth {
     });
 */
 export class FmSynth extends Synth {
-  constructor(adsr, settings) {
+  constructor(adsr, settings = {}) {
     super();
     this.color = settings.color || 8;
     this.intensity = settings.intensity || 1000;
