@@ -1,6 +1,6 @@
 import { getCurrentTime, ctx } from './audio';
-import { createGain, createOscillator } from './nodes';
-import { connect, noteToFreq, Node } from './util';
+import { createBufferSource, createGain, createOscillator } from './nodes';
+import { connect, noteToFreq, freqToNote, Node, noteNameOffsetsFromA440 } from './util';
 
 /*
 Create Attack-Decay-Sustain-Release envelope
@@ -100,6 +100,7 @@ export class Synth extends Node {
 
     if (note) {
       note.stop(when);
+      delete this.notesPlaying[freq];
     }
   }
 }
@@ -143,8 +144,6 @@ export class HarmonicSynth extends Synth {
         try {
           osc.stop(releaseEnd);
         } catch (e) { }
-
-        delete this.notesPlaying[freq];
       }
     };
   }
@@ -206,8 +205,6 @@ export class FmSynth extends Synth {
             node.stop(releaseEnd);
           } catch (e) { }
         });
-
-        delete this.notesPlaying[freq];
       }
     };
   }
@@ -259,5 +256,73 @@ export class EasyHarmonicSynth extends HarmonicSynth {
     const coefficients = Array.from(new Array(coefficientCount));
 
     return coefficients.map(setOddEven).map(setGain);
+  }
+}
+
+/*
+  Example
+    new SamplerSynth({
+      attack: 0.1,
+      decay: 0.1,
+      sustain: 0.4,
+      release: 0.2
+    }, {
+      'a2': <buffer for a2>,
+      'a#2': <buffer for a#2>,
+      ...
+    });
+
+  playFreq will find the closest sample and modify its playback rate
+  to match the expected frequency.
+*/
+export class SamplerSynth extends Synth {
+  // bufferMap is map of note names to buffers
+  constructor(adsr, bufferMap) {
+    super();
+    this.adsr = validateAdsr(adsr);
+
+    // Create map of semitone values to buffers
+    this.semitoneBufferMap = _.mapKeys(bufferMap, (value, key) => {
+      return noteNameOffsetsFromA440[key];
+    });
+  }
+
+  findClosestSample(note) {
+    // notes is an array of the semitone offsets for the available buffers
+    const notes = Object.keys(this.semitoneBufferMap);
+    // find closest entry in notes array to `note`
+    return _.minBy(notes, _note => Math.abs(note - _note));
+  }
+
+  playFreq = (freq, when, length, detune=0) => {
+    const semitonesFromA = freqToNote(freq);
+    const closestSample = this.findClosestSample(semitonesFromA);
+    const semitonesFromSample = semitonesFromA - closestSample;
+    const offsetFromSample = Math.pow(2, semitonesFromSample / 12);
+
+    const source = createBufferSource(this.semitoneBufferMap[closestSample], offsetFromSample);
+
+    const adsrEnv = createAdsrEnvelope(this.adsr, when, length);
+
+    connect(source, adsrEnv, this.output);
+
+    source.start(when);
+
+    return {
+      stop: (when) => {
+        const releaseEnd = when + this.adsr.release;
+
+        // Cancel ADSR
+        adsrEnv.gain.cancelScheduledValues(0);
+
+        // Add new release
+        adsrEnv.gain.setValueAtTime(adsrEnv.gain.value, when);
+        adsrEnv.gain.linearRampToValueAtTime(0, releaseEnd);
+
+        try {
+          source.stop(releaseEnd);
+        } catch (e) { }
+      }
+    };
   }
 }

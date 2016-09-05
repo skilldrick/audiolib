@@ -10,7 +10,47 @@ export const connect = (...nodes) => nodes.reduce((node1, node2) => {
   return node2;
 });
 
-export const noteToFreq = (note) => 440 * Math.pow(2, note / 12);
+export const A440 = 440;
+
+export const noteToFreq = (note) => A440 * Math.pow(2, note / 12);
+
+export const freqToNote = (freq) => Math.log2(freq / A440) * 12;
+
+export const noteNames = [
+  'c',
+  'c#',
+  'd',
+  'd#',
+  'e',
+  'f',
+  'f#',
+  'g',
+  'g#',
+  'a',
+  'a#',
+  'b'
+];
+
+// Generate map of full note name to semitone offset from A440
+// See https://en.wikipedia.org/wiki/Scientific_pitch_notation
+// { 'c0': -48 ... 'c4': 0, ... 'a4': 9, ... 'b9': 71 }
+export const noteNameOffsetsFromMiddleC = (() => {
+  const map = {};
+
+  for (let octave = 0; octave < 10; octave++) {
+    noteNames.forEach((noteName, i) => {
+      map[noteName + octave] = (octave - 3) * 12 + i;
+    });
+  }
+
+  return map;
+})();
+
+// Offsets from A440 are more useful for calculating frequencies
+export const noteNameOffsetsFromA440 = _.mapValues(
+  noteNameOffsetsFromMiddleC,
+  (value) => value - 9
+);
 
 // Randomly detune freq by +/- percent
 export const detune = (freq, percent) => {
