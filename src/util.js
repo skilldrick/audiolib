@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { createGain } from './nodes';
 
 // For a node to act as an input, it must either be an AudioNode/AudioParam or have an input property
@@ -12,7 +13,9 @@ export const connect = (...nodes) => nodes.reduce((node1, node2) => {
 
 export const A440 = 440;
 
-export const noteToFreq = (note) => A440 * Math.pow(2, note / 12);
+export const semitoneToRate = (semitone) => Math.pow(2, semitone / 12);
+
+export const noteToFreq = (note) => A440 * semitoneToRate(note);
 
 export const freqToNote = (freq) => Math.log2(freq / A440) * 12;
 
