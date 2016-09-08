@@ -7,11 +7,12 @@ import { createBufferSource, createGain } from './nodes';
 // A SingleBufferSampler takes a buffer and
 // a map of sample names to offsets in seconds
 // e.g. { A: 0, S: 1.5, D: 10, F: 11 }
+// or a map of sample names to sample info (see setSampleMap)
 export class SingleBufferSampler extends Node {
-  constructor(buffer, offsetMap) {
+  constructor(buffer, initMap) {
     super();
     this.buffer = buffer;
-    this.setSampleMap(offsetMap);
+    this.setSampleMap(initMap);
   }
 
   play = (sampleName, when) => {
@@ -65,10 +66,10 @@ export class SingleBufferSampler extends Node {
   }
 
   // Initialize this.sampleMap with default values for each sample property
-  setSampleMap(offsetMap) {
-    this.sampleMap = _.mapValues(offsetMap, (value, key) => {
-      return {
-        offset:       value,
+  setSampleMap(initMap) {
+    this.sampleMap = _.mapValues(initMap, (value, key) => {
+      const defaults = {
+        offset:       0,
         name:         key,
         playbackRate: 1,
         gain:         1,
@@ -76,6 +77,14 @@ export class SingleBufferSampler extends Node {
         fadeIn:       0,
         fadeOut:      0
       };
+
+      if (typeof value === 'object') {
+        // merge provided values with defaults
+        return Object.assign({}, defaults, value);
+      } else {
+        // use defaults and set offset to provided value
+        return Object.assign({}, defaults, { offset: value });
+      }
     });
   }
 
