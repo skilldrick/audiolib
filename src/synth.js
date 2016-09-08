@@ -1,6 +1,6 @@
 import { getCurrentTime, ctx } from './audio';
 import { createBufferSource, createGain, createOscillator } from './nodes';
-import { connect, noteToFreq, freqToNote, Node, noteNameOffsetsFromA440 } from './util';
+import { connect, noteToFreq, freqToNote, Node, noteNameOffsetsFromA440, semitoneToRate } from './util';
 
 /*
 Create Attack-Decay-Sustain-Release envelope
@@ -295,10 +295,10 @@ export class SamplerSynth extends Synth {
   }
 
   playFreq = (freq, when, length, detune=0) => {
-    const semitonesFromA = freqToNote(freq);
+    const semitonesFromA = freqToNote(freq) + (detune / 100);
     const closestSample = this.findClosestSample(semitonesFromA);
     const semitonesFromSample = semitonesFromA - closestSample;
-    const offsetFromSample = Math.pow(2, semitonesFromSample / 12);
+    const offsetFromSample = semitoneToRate(semitonesFromSample);
 
     const source = createBufferSource(this.semitoneBufferMap[closestSample], offsetFromSample);
 
