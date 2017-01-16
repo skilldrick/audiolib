@@ -267,8 +267,8 @@ export class EasyHarmonicSynth extends HarmonicSynth {
       sustain: 0.4,
       release: 0.2
     }, {
-      'a2': <buffer for a2>,
-      'a#2': <buffer for a#2>,
+      'A2':  <buffer for A2>,
+      'A#2': <buffer for A#2>,
       ...
     });
 
