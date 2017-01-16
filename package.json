@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "compile": "babel -d . src/",
-    "browserify": "browserify browserify.js --standalone sine -t babelify --outfile index.js",
+    "browserify": "browserify browserify.js --standalone sine -t babelify --outfile sine.js",
     "prepublish": "npm run compile && npm run browserify"
   },
   "devDependencies": {
